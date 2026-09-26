@@ -1,0 +1,2 @@
+import {Router} from 'express';import {store,nextId} from '../store.js';const r=Router();
+r.get('/',(q,s)=>s.json({items:store.bills}));r.get('/agents',(q,s)=>s.json({items:store.agents}));r.post('/agents',(q,s)=>{const x={id:nextId(store.agents),active:true,...q.body};store.agents.push(x);s.status(201).json(x)});r.patch('/agents/:id',(q,s)=>{const i=store.agents.findIndex(x=>x.id==q.params.id);if(i<0)return s.status(404).json({message:'Agent not found'});store.agents[i]={...store.agents[i],...q.body};s.json(store.agents[i])});export default r;

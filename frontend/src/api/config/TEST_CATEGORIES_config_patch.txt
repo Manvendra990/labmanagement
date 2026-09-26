@@ -1,0 +1,6 @@
+Add inside API_CONFIG.ENDPOINTS:
+
+TEST_CATEGORIES:Object.freeze({
+ BASE:"/lab/test-categories",
+ BY_ID:id=>`/lab/test-categories/${id}`
+}),

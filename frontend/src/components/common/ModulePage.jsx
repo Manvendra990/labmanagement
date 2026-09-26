@@ -1,0 +1,1 @@
+export default function ModulePage({title}){return <div className="page"><h1>{title}</h1><p>Module workspace</p><section><h2>{title}</h2><p>This screen has its own route and is ready for functional implementation.</p></section></div>}

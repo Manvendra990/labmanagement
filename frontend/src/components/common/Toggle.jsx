@@ -1,0 +1,1 @@
+export default function Toggle({checked,onChange,label}){return <div className="toggle-row"><span>{label}</span><button type="button" className={"toggle "+(checked?"on":"")} onClick={()=>onChange(!checked)}><i/></button></div>}

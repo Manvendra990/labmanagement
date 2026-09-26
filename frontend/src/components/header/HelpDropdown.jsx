@@ -1,0 +1,1 @@
+export default function HelpDropdown(){return <div className="simple-menu"><button>Help centre</button><button>Contact support</button><button>Keyboard shortcuts</button></div>}

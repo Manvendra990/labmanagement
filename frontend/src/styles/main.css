@@ -1,0 +1,355 @@
+/* =========================================
+   GLOBAL
+========================================= */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  min-height: 100vh;
+  font-family: Arial, sans-serif;
+  color: #18243a;
+  background: #ffffff;
+}
+
+
+/* =========================================
+   COMPLETE APP
+========================================= */
+
+.app-shell {
+  width: 100%;
+  min-height: 100vh;
+
+  display: flex;
+  flex-direction: column;
+
+  background: #ffffff;
+}
+
+
+/* =========================================
+   HEADER
+========================================= */
+
+.app-header {
+  width: 100%;
+  height: 66px;
+
+  flex-shrink: 0;
+
+  position: sticky;
+  top: 0;
+
+  z-index: 100;
+
+  background: #ffffff;
+  border-bottom: 1px solid #e1e6ed;
+}
+
+
+/* =========================================
+   BELOW HEADER
+========================================= */
+
+.app-workspace {
+  display: flex;
+
+  flex: 1;
+
+  width: 100%;
+
+  min-height: calc(100vh - 66px);
+}
+
+
+/* =========================================
+   SIDEBAR
+========================================= */
+
+.sidebar {
+  width: 210px;
+
+  flex: 0 0 210px;
+
+  min-height: calc(100vh - 66px);
+
+  background: #fbfcfe;
+
+  border-right: 1px solid #dfe5ed;
+
+  padding: 12px 8px;
+
+  overflow-y: auto;
+
+  /*
+    IMPORTANT:
+    No position: fixed;
+    No top: 0;
+    Sidebar now naturally starts
+    BELOW the header.
+  */
+}
+
+
+/* =========================================
+   SIDEBAR LOGO
+========================================= */
+
+/*
+  Logo is now inside Header,
+  so sidebar logo is not required.
+*/
+
+.logo {
+  display: none;
+}
+
+
+/* =========================================
+   SIDEBAR LINKS
+========================================= */
+
+.new,
+.getting,
+.nav,
+.sub a {
+  display: flex;
+
+  align-items: center;
+
+  gap: 7px;
+
+  width: 100%;
+
+  border: 0;
+
+  padding: 10px;
+
+  border-radius: 6px;
+
+  text-decoration: none;
+
+  color: #27364c;
+
+  background: transparent;
+
+  cursor: pointer;
+}
+
+
+/* =========================================
+   NEW BILL
+========================================= */
+
+.new {
+  justify-content: center;
+
+  background: #2467e8;
+
+  color: #ffffff;
+
+  border-radius: 22px;
+
+  font-weight: 500;
+}
+
+.new:hover {
+  background: #1859d1;
+}
+
+
+/* =========================================
+   GETTING STARTED
+========================================= */
+
+.getting {
+  margin-top: 8px;
+}
+
+.getting:hover {
+  background: #f1f5fb;
+}
+
+.getting.active {
+  background: #e4efff;
+  color: #1559d5;
+}
+
+
+/* =========================================
+   MAIN NAVIGATION
+========================================= */
+
+.nav {
+  justify-content: space-between;
+
+  margin-top: 2px;
+}
+
+.nav:hover {
+  background: #f1f5fb;
+}
+
+.nav.active {
+  background: #e8f0ff;
+  color: #1559d5;
+}
+
+
+/* =========================================
+   SUB MENU
+========================================= */
+
+.sub {
+  padding-left: 18px;
+}
+
+.sub a {
+  font-size: 13px;
+
+  padding: 7px 10px;
+
+  margin: 1px 0;
+}
+
+.sub a:hover {
+  background: #f1f5fb;
+}
+
+.sub a.active {
+  background: #e8f0ff;
+  color: #1559d5;
+}
+
+
+/* =========================================
+   MAIN PAGE CONTENT
+========================================= */
+
+.app-content {
+  flex: 1;
+
+  min-width: 0;
+
+  width: calc(100% - 210px);
+
+  background: #ffffff;
+
+  overflow-x: auto;
+}
+
+
+/* =========================================
+   PAGE
+========================================= */
+
+.page {
+  width: 100%;
+
+  padding: 22px;
+}
+
+
+/* =========================================
+   DASHBOARD CARDS
+========================================= */
+
+.cards {
+  display: grid;
+
+  grid-template-columns: repeat(3, 1fr);
+
+  gap: 16px;
+
+  margin: 20px 0;
+}
+
+.cards > div,
+.page section {
+  border: 1px solid #dfe5ed;
+
+  border-radius: 8px;
+
+  padding: 20px;
+
+  background: #ffffff;
+}
+
+.cards strong {
+  display: block;
+
+  margin-top: 15px;
+
+  font-size: 26px;
+
+  color: #2767e9;
+}
+
+
+/* =========================================
+   PAGE SECTION
+========================================= */
+
+.page section {
+  min-height: 220px;
+}
+
+
+/* =========================================
+   TABLET
+========================================= */
+
+@media (max-width: 1000px) {
+
+  .sidebar {
+    width: 180px;
+
+    flex-basis: 180px;
+  }
+
+  .app-content {
+    width: calc(100% - 180px);
+  }
+
+}
+
+
+/* =========================================
+   MOBILE
+========================================= */
+
+@media (max-width: 768px) {
+
+  .app-workspace {
+    position: relative;
+  }
+
+  .sidebar {
+    width: 170px;
+
+    flex-basis: 170px;
+  }
+
+  .app-content {
+    width: calc(100% - 170px);
+  }
+
+  .page {
+    padding: 15px;
+  }
+
+  .cards {
+    grid-template-columns: 1fr;
+  }
+
+}

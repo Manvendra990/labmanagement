@@ -1,0 +1,1 @@
+let tokenGetter=()=>null;export function setApiTokenGetter(fn){tokenGetter=typeof fn==="function"?fn:()=>null}export function getApiToken(){try{return tokenGetter()}catch{return null}}

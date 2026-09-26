@@ -1,0 +1,1 @@
+export default function SetupDropdown(){return <div className="simple-menu"><button>Lab settings</button><button>Report settings</button><button>Billing settings</button><button>Notification settings</button></div>}

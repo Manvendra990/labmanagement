@@ -1,0 +1,1 @@
+import{Router}from'express';import*as c from'../controllers/unitController.js';import{asyncHandler}from'../utils/asyncHandler.js';const r=Router();r.get('/',asyncHandler(c.list));r.post('/',asyncHandler(c.create));r.patch('/:id',asyncHandler(c.update));r.delete('/:id',asyncHandler(c.remove));export default r;

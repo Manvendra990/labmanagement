@@ -1,0 +1,12 @@
+import{useMemo,useState}from"react";import"./manage.css";
+const initial=[
+{id:1,name:"LAB OWNER",last:"21 Sep 2026, 7:36 PM",code:"131D",blocked:true},
+{id:2,name:"LAB OWNER",last:"21 Sep 2026, 1:07 PM",code:"D0F2",blocked:true},
+{id:3,name:"LAB OWNER",last:"21 Sep 2026, 6:39 PM",code:"53D8",blocked:true,current:true},
+{id:4,name:"LAB OWNER",last:"21 Sep 2026, 4:15 PM",code:"EEB4",blocked:true},
+{id:5,name:"LAB OWNER",last:"20 Sep 2026, 1:55 PM",code:"D908",blocked:true},
+{id:6,name:"LAB OWNER",last:"18 Sep 2026, 5:21 PM",code:"BDF4",blocked:true},
+{id:7,name:"LAB OWNER",last:"Not available",code:"0315",blocked:false},
+{id:8,name:"LAB OWNER",last:"Not available",code:"3B60",blocked:false}
+];
+export default function BrowserSecurity(){const[items,setItems]=useState(initial),[q,setQ]=useState(""),[security,setSecurity]=useState(true);const rows=useMemo(()=>items.filter(x=>x.code.toLowerCase().includes(q.toLowerCase())||x.name.toLowerCase().includes(q.toLowerCase())),[items,q]);const toggle=id=>setItems(v=>v.map(x=>x.id===id?{...x,blocked:!x.blocked}:x));return <div className="manage-page"><div style={{fontSize:10,color:"#1769e8"}}>DASHBOARD &nbsp; / &nbsp; MANAGE BROWSERS</div><h1>Browser security <span className="beta">Beta</span></h1><div className="security-card"><div className="security-main"><div><h3>Control browser access</h3><p>Block access to browsers not being used inside the laboratory.</p></div><div className="security-state"><div className="shield">🛡</div>Security is {security?"on":"off"}</div></div><div className="security-footer" onClick={()=>setSecurity(!security)}>{security?"Turn off security":"Turn on security"}</div></div><h2>All browsers</h2><div className="manage-toolbar"><input className="manage-input" style={{flex:1}} placeholder="⌕  Search by browser code" value={q} onChange={e=>setQ(e.target.value)}/><button className="manage-btn manage-right">▽ Filter</button></div><div className="browser-grid">{rows.map(x=><div className={"browser-card "+(x.blocked?"blocked":"")} key={x.id}><div className="browser-head">{x.name} ✎ {x.blocked&&<span className="blocked-tag">Blocked</span>}</div><div className="browser-body">Last login :<br/>{x.last}<br/>Browser code: <span className="browser-code">{x.code}</span>{x.current&&<span style={{float:"right"}}>🔵 Current browser</span>}</div><div className="browser-foot"><button className={"manage-btn "+(!x.blocked?"danger":"")} onClick={()=>toggle(x.id)}>{x.blocked?"Unblock":"⊘ Block"}</button></div></div>)}</div></div>}

@@ -1,0 +1,6 @@
+import {db} from '../config/db.js';
+export async function findAll(){const [r]=await db.query(`SELECT id,name,sort_order AS sortOrder,active,created_at AS createdAt,updated_at AS updatedAt FROM test_categories WHERE active=1 ORDER BY sort_order,id`);return r}
+export async function findById(id){const [r]=await db.execute(`SELECT id,name,sort_order AS sortOrder,active,created_at AS createdAt,updated_at AS updatedAt FROM test_categories WHERE id=? LIMIT 1`,[id]);return r[0]||null}
+export async function findByName(name,excludeId=null){let sql='SELECT id FROM test_categories WHERE LOWER(name)=LOWER(?)';const p=[name];if(excludeId){sql+=' AND id<>?';p.push(excludeId)}sql+=' LIMIT 1';const [r]=await db.execute(sql,p);return r[0]||null}
+export async function create(name){const c=await db.getConnection();try{await c.beginTransaction();const [[x]]=await c.query('SELECT COALESCE(MAX(sort_order),0)+1 AS nextOrder FROM test_categories WHERE active=1');const [r]=await c.execute('INSERT INTO test_categories(name,sort_order,active) VALUES(?,?,1)',[name,x.nextOrder]);await c.commit();return findById(r.insertId)}catch(e){await c.rollback();throw e}finally{c.release()}}
+export async function update(id,name){await db.execute('UPDATE test_categories SET name=? WHERE id=? AND active=1',[name,id]);return findById(id)}

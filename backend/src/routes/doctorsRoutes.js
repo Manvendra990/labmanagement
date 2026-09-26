@@ -1,0 +1,2 @@
+import {Router} from 'express';import {store,nextId} from '../store.js';const r=Router();
+r.get('/',(q,s)=>s.json({items:store.referrers}));r.post('/',(q,s)=>{const x={id:nextId(store.referrers),active:true,...q.body};store.referrers.push(x);s.status(201).json(x)});r.patch('/:id',(q,s)=>{const i=store.referrers.findIndex(x=>x.id==q.params.id);if(i<0)return s.status(404).json({message:'Referrer not found'});store.referrers[i]={...store.referrers[i],...q.body};s.json(store.referrers[i])});export default r;

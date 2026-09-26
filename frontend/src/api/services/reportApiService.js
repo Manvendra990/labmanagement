@@ -1,0 +1,1 @@
+import apiClient from"../core/apiClient";import{API_CONFIG}from"../config/apiConfig";const E=API_CONFIG.ENDPOINTS.REPORTS;export default{list:q=>apiClient.get(E.BASE,{query:q}),today:q=>apiClient.get(E.TODAY,{query:q}),search:q=>apiClient.get(E.SEARCH,{query:q}),getById:id=>apiClient.get(E.BY_ID(id)),update:(id,p)=>apiClient.patch(E.BY_ID(id),p)};

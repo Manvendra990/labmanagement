@@ -1,0 +1,12 @@
+.addon-page{min-height:calc(100vh - 60px);padding:12px 24px;background:#fff;color:#18243a}
+.addon-hero{text-align:center;padding-top:0}
+.addon-hero h1{font-size:24px;margin:0 0 15px;font-weight:700}
+.addon-hero h1 span{color:#c52aa0}
+.addon-hero p{font-size:14px;color:#475467;margin:0 0 30px}
+.addon-hero p b{color:#155ee8}
+.addon-price-card{width:340px;margin:78px auto 12px;text-align:left}
+.addon-price-card>div{display:grid;grid-template-columns:1fr 1.2fr;gap:20px;padding:9px 0;border-bottom:1px solid #d9e0e8;font-size:13px}
+.addon-price-card strong{text-align:right;color:#111827}
+.addon-primary{border:0;border-radius:5px;background:linear-gradient(90deg,#7848f5,#536cf2);color:#fff;font-weight:600;padding:10px 16px;cursor:pointer}
+.addon-price-line{margin-top:34px!important;color:#344054!important}
+@media(max-width:700px){.addon-page{padding:16px}.addon-hero h1{font-size:20px}.addon-price-card{width:100%;max-width:360px;margin-top:45px}}
