@@ -82,13 +82,23 @@ export default function NewBill() {
         <h2>Patient details</h2>
         <label>Mobile number</label>
         <div className="nb-mobile">
-          <span>+91</span>
-          <input
-            value={patient.mobile}
-            onChange={(e) => p("mobile", e.target.value)}
-          />
-          <Search size={15} />
-        </div>
+  <span>+91</span>
+
+  <input
+    type="tel"
+    inputMode="numeric"
+    autoComplete="tel-national"
+    aria-label="Mobile number"
+    placeholder="Enter mobile number"
+    maxLength={10}
+    value={patient.mobile}
+    onChange={(e) =>
+      p("mobile", e.target.value.replace(/\D/g, "").slice(0, 10))
+    }
+  />
+
+  <Search size={16} aria-hidden="true" />
+</div>
         <div className="nb-patient-grid">
           <Field
             label="Title*"

@@ -1,1 +1,45 @@
-import {db} from '../config/db.js'; export async function findAll(){const[r]=await db.query('SELECT id,name,active,created_at AS createdAt,updated_at AS updatedAt FROM lab_units WHERE active=1 ORDER BY name');return r} export async function findByName(name){const[r]=await db.query('SELECT id,name FROM lab_units WHERE LOWER(name)=LOWER(?) LIMIT 1',[name]);return r[0]||null} export async function create(name){const[r]=await db.query('INSERT INTO lab_units(name) VALUES(?)',[name]);const[x]=await db.query('SELECT id,name,active FROM lab_units WHERE id=?',[r.insertId]);return x[0]} export async function update(id,name){await db.query('UPDATE lab_units SET name=? WHERE id=?',[name,id]);const[r]=await db.query('SELECT id,name,active FROM lab_units WHERE id=?',[id]);return r[0]||null} export async function remove(id){const[r]=await db.query('UPDATE lab_units SET active=0 WHERE id=?',[id]);return r.affectedRows>0}
+
+import { db } from '../config/db.js';
+
+const serialize = (unit) => unit && ({ ...unit, id: Number(unit.id) });
+
+export async function findAll() {
+  const rows = await db.labUnit.findMany({
+    where: { active: true },
+    orderBy: [{ name: 'asc' }, { id: 'asc' }],
+  });
+  return rows.map(serialize);
+}
+
+export async function findByName(name, excludeId = null) {
+  const unit = await db.labUnit.findFirst({
+    where: {
+      name: name.trim(),
+      active: true,
+      ...(excludeId !== null && excludeId !== undefined ? { id: { not: BigInt(excludeId) } } : {}),
+    },
+    select: { id: true, name: true },
+  });
+  return unit && ({ ...unit, id: Number(unit.id) });
+}
+
+export async function create(name) {
+  return serialize(await db.labUnit.create({ data: { name: name.trim() } }));
+}
+
+export async function update(id, name) {
+  const result = await db.labUnit.updateMany({
+    where: { id: BigInt(id), active: true },
+    data: { name: name.trim() },
+  });
+  if (!result.count) return null;
+  return serialize(await db.labUnit.findUnique({ where: { id: BigInt(id) } }));
+}
+
+export async function remove(id) {
+  const result = await db.labUnit.updateMany({
+    where: { id: BigInt(id), active: true },
+    data: { active: false },
+  });
+  return result.count > 0;
+}

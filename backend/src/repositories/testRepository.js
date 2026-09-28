@@ -1,7 +1,134 @@
-import{db}from'../config/db.js';
-const map=r=>({...r,shortName:r.shortName||'',categoryId:Number(r.categoryId),unitId:r.unitId?Number(r.unitId):null,optional:!!r.optional,displayName:!!r.displayName});
-export async function findAll(){const[r]=await db.query(`SELECT t.id,t.type,t.name,t.short_name shortName,t.category_id categoryId,c.name categoryName,t.price,t.unit_id unitId,t.input_type inputType,t.default_result defaultResult,t.optional,t.display_name displayName,t.method,t.instrument,t.interpretation,CASE t.type WHEN 'single' THEN 'Single parameter' WHEN 'multi' THEN 'Multi parameter' WHEN 'nested' THEN 'Multi parameter nested' ELSE 'Document' END typeLabel FROM lab_tests t JOIN test_categories c ON c.id=t.category_id WHERE t.active=1 ORDER BY t.id`);return r.map(map)}
-export async function findById(id){const[r]=await db.query(`SELECT t.id,t.type,t.name,t.short_name shortName,t.category_id categoryId,c.name categoryName,t.price,t.unit_id unitId,t.input_type inputType,t.default_result defaultResult,t.optional,t.display_name displayName,t.method,t.instrument,t.interpretation FROM lab_tests t JOIN test_categories c ON c.id=t.category_id WHERE t.id=? AND t.active=1`,[id]);if(!r[0])return null;const[p]=await db.query(`SELECT id,display_order \'order\',name,unit_id unitId,input_type inputType,group_by_name groupBy,default_result defaultResult,optional,parent_parameter_id parentParameterId FROM lab_test_parameters WHERE test_id=? ORDER BY display_order,id`,[id]);return{...map(r[0]),parameters:p.map(x=>({...x,optional:!!x.optional}))}}
-export async function create(data){const conn=await db.getConnection();try{await conn.beginTransaction();const[r]=await conn.query(`INSERT INTO lab_tests(type,name,short_name,category_id,price,unit_id,input_type,default_result,optional,display_name,method,instrument,interpretation) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)`,[data.type,data.name,data.shortName||null,data.categoryId,data.price||0,data.unitId||null,data.inputType||null,data.defaultResult||null,data.optional?1:0,data.displayName===false?0:1,data.method||null,data.instrument||null,data.interpretation||null]);for(const p of data.parameters||[])await conn.query(`INSERT INTO lab_test_parameters(test_id,display_order,name,unit_id,input_type,group_by_name,default_result,optional) VALUES(?,?,?,?,?,?,?,?)`,[r.insertId,p.order,p.name,p.unitId||null,p.inputType||'single_line',p.groupBy||null,p.defaultResult||null,p.optional?1:0]);await conn.commit();return r.insertId}catch(e){await conn.rollback();throw e}finally{conn.release()}}
-export async function update(id,data){const conn=await db.getConnection();try{await conn.beginTransaction();const[r]=await conn.query(`UPDATE lab_tests SET type=?,name=?,short_name=?,category_id=?,price=?,unit_id=?,input_type=?,default_result=?,optional=?,display_name=?,method=?,instrument=?,interpretation=? WHERE id=? AND active=1`,[data.type,data.name,data.shortName||null,data.categoryId,data.price||0,data.unitId||null,data.inputType||null,data.defaultResult||null,data.optional?1:0,data.displayName===false?0:1,data.method||null,data.instrument||null,data.interpretation||null,id]);if(!r.affectedRows){await conn.rollback();return false}await conn.query('DELETE FROM lab_test_parameters WHERE test_id=?',[id]);for(const p of data.parameters||[])await conn.query(`INSERT INTO lab_test_parameters(test_id,display_order,name,unit_id,input_type,group_by_name,default_result,optional) VALUES(?,?,?,?,?,?,?,?)`,[id,p.order,p.name,p.unitId||null,p.inputType||'single_line',p.groupBy||null,p.defaultResult||null,p.optional?1:0]);await conn.commit();return true}catch(e){await conn.rollback();throw e}finally{conn.release()}}
-export async function remove(id){const[r]=await db.query('UPDATE lab_tests SET active=0 WHERE id=?',[id]);return r.affectedRows>0}
+import { db } from '../config/db.js';
+
+const typeLabels = {
+	single: 'Single parameter',
+	multi: 'Multi parameter',
+	nested: 'Multi parameter nested',
+	document: 'Document',
+};
+
+function serialize(test) {
+	return {
+		id: Number(test.id),
+		type: test.type,
+		name: test.name,
+		shortName: test.shortName || '',
+		categoryId: Number(test.categoryId),
+		categoryName: test.category.name,
+		price: Number(test.price),
+		unitId: test.unitId === null ? null : Number(test.unitId),
+		inputType: test.inputType,
+		defaultResult: test.defaultResult,
+		optional: test.optional,
+		displayName: test.displayName,
+		method: test.method,
+		instrument: test.instrument,
+		interpretation: test.interpretation,
+		typeLabel: typeLabels[test.type] || 'Document',
+	};
+}
+
+const testInclude = { category: { select: { name: true } } };
+
+export async function findAll() {
+	const tests = await db.labTest.findMany({
+		where: { active: true },
+		include: testInclude,
+		orderBy: { id: 'asc' },
+	});
+	return tests.map(serialize);
+}
+
+export async function findById(id) {
+	const test = await db.labTest.findFirst({
+		where: { id: BigInt(id), active: true },
+		include: {
+			...testInclude,
+			parameters: { orderBy: [{ order: 'asc' }, { id: 'asc' }] },
+		},
+	});
+	if (!test) return null;
+	return {
+		...serialize(test),
+		parameters: test.parameters.map((parameter) => ({
+			id: Number(parameter.id),
+			order: parameter.order,
+			name: parameter.name,
+			unitId: parameter.unitId === null ? null : Number(parameter.unitId),
+			inputType: parameter.inputType,
+			groupBy: parameter.groupBy,
+			defaultResult: parameter.defaultResult,
+			optional: parameter.optional,
+			parentParameterId: parameter.parentParameterId === null ? null : Number(parameter.parentParameterId),
+		})),
+	};
+}
+
+function testData(data) {
+	return {
+		type: data.type,
+		name: data.name,
+		shortName: data.shortName || null,
+		categoryId: BigInt(data.categoryId),
+		price: data.price || 0,
+		unitId: data.unitId ? BigInt(data.unitId) : null,
+		inputType: data.inputType || null,
+		defaultResult: data.defaultResult || null,
+		optional: Boolean(data.optional),
+		displayName: data.displayName !== false,
+		method: data.method || null,
+		instrument: data.instrument || null,
+		interpretation: data.interpretation || null,
+	};
+}
+
+function parameterData(parameter) {
+	return {
+		order: parameter.order,
+		name: parameter.name,
+		unitId: parameter.unitId ? BigInt(parameter.unitId) : null,
+		inputType: parameter.inputType || 'single_line',
+		groupBy: parameter.groupBy || null,
+		defaultResult: parameter.defaultResult || null,
+		optional: Boolean(parameter.optional),
+		parentParameterId: parameter.parentParameterId ? BigInt(parameter.parentParameterId) : null,
+	};
+}
+
+export async function create(data) {
+	const test = await db.labTest.create({
+		data: {
+			...testData(data),
+			parameters: { create: (data.parameters || []).map(parameterData) },
+		},
+		select: { id: true },
+	});
+	return Number(test.id);
+}
+
+export async function update(id, data) {
+	const result = await db.$transaction(async (tx) => {
+		const existing = await tx.labTest.findFirst({
+			where: { id: BigInt(id), active: true },
+			select: { id: true },
+		});
+		if (!existing) return false;
+		await tx.labTest.update({ where: { id: BigInt(id) }, data: testData(data) });
+		await tx.labTestParameter.deleteMany({ where: { testId: BigInt(id) } });
+		if (data.parameters?.length) {
+			await tx.labTestParameter.createMany({
+				data: data.parameters.map((parameter) => ({ ...parameterData(parameter), testId: BigInt(id) })),
+			});
+		}
+		return true;
+	});
+	return result;
+}
+
+export async function remove(id) {
+	const result = await db.labTest.updateMany({
+		where: { id: BigInt(id), active: true },
+		data: { active: false },
+	});
+	return result.count > 0;
+}

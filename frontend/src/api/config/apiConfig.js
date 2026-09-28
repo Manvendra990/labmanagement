@@ -14,7 +14,16 @@ export const API_CONFIG=Object.freeze({
   REPORTS:Object.freeze({BASE:"/reports",TODAY:"/reports/today",SEARCH:"/reports/search",BY_ID:id=>`/reports/${id}`}),
   LAB:Object.freeze({BASE:"/lab",TODAY:"/lab/today",TESTS:"/lab/tests"}),
   TEST_CATEGORIES:Object.freeze({BASE:"/lab/test-categories",BY_ID:id=>`/lab/test-categories/${id}`}),
-  EMPLOYEES:Object.freeze({BASE:"/manage/employees",BY_ID:id=>`/manage/employees/${id}`})
+  EMPLOYEES:Object.freeze({BASE:"/manage/employees",BY_ID:id=>`/manage/employees/${id}`}),
+   UNITS: Object.freeze({
+  BASE: "/lab/units",
+  BY_ID: (id) => `/lab/units/${id}`,
+}),
+
+INPUT_TYPES: Object.freeze({
+  BASE: "/lab/input-types",
+}),
+
  })
 });
 export default API_CONFIG;
