@@ -1,3 +1,4 @@
+
 import { Routes, Route, Navigate } from "react-router-dom";
 import AppLayout from "../components/layout/AppLayout";
 
@@ -33,13 +34,13 @@ import DataExport from "../pages/business/DataExport.jsx";
 // =========================
 import NewBill from "../pages/cases/NewBill";
 import Bills from "../pages/cases/Bills.jsx";
-// import NewBill from "../pages/cases/NewBill.jsx";
 import OutsourceCases from "../pages/cases/OutsourceCases.jsx";
 import CTScanCases from "../pages/cases/CTScanCases.jsx";
 import Patients from "../pages/cases/Patients.jsx";
 import Transactions from "../pages/cases/Transactions.jsx";
 import ReferralDoctors from "../pages/cases/ReferralDoctors.jsx";
 import Agents from "../pages/cases/Agents.jsx";
+import BillDetails from "../pages/cases/BillDetails.jsx";
 
 // =========================
 // LAB
@@ -81,11 +82,9 @@ import DoctorAccess from "../pages/manage/DoctorAccess.jsx";
 export default function AppRoutes() {
   return (
     <Routes>
-
       {/* =========================
           PUBLIC AUTH ROUTES
          ========================= */}
-
       <Route path="/login" element={<Login />} />
 
       <Route
@@ -108,15 +107,11 @@ export default function AppRoutes() {
         element={<AccountLocked />}
       />
 
-
       {/* =========================
           MAIN APPLICATION
          ========================= */}
-
       <Route element={<AppLayout />}>
-
         {/* Dashboard */}
-
         <Route
           path="/dashboard"
           element={<Dashboard />}
@@ -127,11 +122,9 @@ export default function AppRoutes() {
           element={<GettingStarted />}
         />
 
-
         {/* =========================
             BUSINESS
            ========================= */}
-
         <Route
           path="/business/daily"
           element={<DailyBusiness />}
@@ -172,17 +165,24 @@ export default function AppRoutes() {
           element={<DataExport />}
         />
 
-
         {/* =========================
             CASES
            ========================= */}
-<Route path="/cases/new-bill" element={<NewBill />} />
+        <Route
+          path="/cases/new-bill"
+          element={<NewBill />}
+        />
+
         <Route
           path="/cases/bills"
           element={<Bills />}
         />
 
- 
+        {/* Modify an existing bill */}
+        <Route
+          path="/cases/bills/:id/modify"
+          element={<NewBill />}
+        />
 
         <Route
           path="/cases/outsource"
@@ -214,11 +214,14 @@ export default function AppRoutes() {
           element={<Agents />}
         />
 
+        <Route
+          path="/cases/bill-details/:id"
+          element={<BillDetails />}
+        />
 
         {/* =========================
             LAB
            ========================= */}
-
         <Route
           path="/lab/today"
           element={<TodayReports />}
@@ -248,9 +251,21 @@ export default function AppRoutes() {
           path="/lab/tests"
           element={<TestDatabase />}
         />
-                <Route path="/lab/tests/select-type" element={<TestTypeSelect />} />
-        <Route path="/lab/tests/new/:type" element={<TestForm />} />
-        <Route path="/lab/tests/:id/edit/:type" element={<TestForm />} />
+
+        <Route
+          path="/lab/tests/select-type"
+          element={<TestTypeSelect />}
+        />
+
+        <Route
+          path="/lab/tests/new/:type"
+          element={<TestForm />}
+        />
+
+        <Route
+          path="/lab/tests/:id/edit/:type"
+          element={<TestForm />}
+        />
 
         <Route
           path="/lab/interpretations"
@@ -262,11 +277,9 @@ export default function AppRoutes() {
           element={<TestCounts />}
         />
 
-
         {/* =========================
             USG
            ========================= */}
-
         <Route
           path="/usg/today"
           element={<UsgToday />}
@@ -287,11 +300,9 @@ export default function AppRoutes() {
           element={<UsgSignatures />}
         />
 
-
         {/* =========================
             DIGITAL X-RAY
            ========================= */}
-
         <Route
           path="/xray/today"
           element={<XrayToday />}
@@ -312,11 +323,9 @@ export default function AppRoutes() {
           element={<XraySignatures />}
         />
 
-
         {/* =========================
             MANAGE
            ========================= */}
-
         <Route
           path="/manage/browser-security"
           element={<BrowserSecurity />}
@@ -331,26 +340,21 @@ export default function AppRoutes() {
           path="/manage/doctor-access"
           element={<DoctorAccess />}
         />
-
       </Route>
-
 
       {/* =========================
           DEFAULT ROUTE
          ========================= */}
-
       <Route
         path="/"
         element={<Navigate to="/login" replace />}
       />
 
       {/* Unknown URL */}
-
       <Route
         path="*"
         element={<Navigate to="/login" replace />}
       />
-
     </Routes>
   );
 }
