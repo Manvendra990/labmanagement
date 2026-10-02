@@ -1,4 +1,3 @@
-
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
@@ -8,6 +7,18 @@ import {
   X,
   Settings,
   Pencil,
+  FlaskConical,
+  Scan,
+  HeartPulse,
+  Activity,
+  Monitor,
+  Waves,
+  Brain,
+  Image,
+  Microscope,
+  Radio,
+  ScanLine,
+  Bone,
 } from "lucide-react";
 
 import {
@@ -19,13 +30,11 @@ import {
 import { apiArray } from "../../api/core/apiData";
 import "./new-bill.css";
 
-const getId = (item) =>
-  item?.id ?? item?._id ?? item?.value ?? "";
+const getId = (item) => item?.id ?? item?._id ?? item?.value ?? "";
 
 const getResponseData = (response) => {
   let result = response?.data ?? response;
 
-  // Handle common API response wrappers.
   for (let i = 0; i < 3; i += 1) {
     if (!result || typeof result !== "object") break;
 
@@ -58,17 +67,15 @@ const getResponseData = (response) => {
   return result;
 };
 
-const getPatientName = (bill, patientData) => {
-  const name =
+const getPatientName = (bill, patientData) =>
+  String(
     patientData?.patientName ??
-    patientData?.fullName ??
-    bill?.patientName ??
-    bill?.fullName ??
-    (typeof bill?.patient === "string" ? bill.patient : "") ??
-    "";
-
-  return String(name).trim();
-};
+      patientData?.fullName ??
+      bill?.patientName ??
+      bill?.fullName ??
+      (typeof bill?.patient === "string" ? bill.patient : "") ??
+      "",
+  ).trim();
 
 const splitPatientName = (name) => {
   const parts = String(name || "")
@@ -77,7 +84,6 @@ const splitPatientName = (name) => {
     .filter(Boolean);
 
   const titles = ["Mr.", "Mrs.", "Ms.", "Master", "Dr."];
-
   const title = titles.includes(parts[0]) ? parts[0] : "";
   const names = title ? parts.slice(1) : parts;
 
@@ -92,6 +98,7 @@ const getNumericValue = (...values) => {
   for (const value of values) {
     if (value !== undefined && value !== null && value !== "") {
       const number = Number(value);
+
       if (Number.isFinite(number)) return number;
     }
   }
@@ -99,32 +106,227 @@ const getNumericValue = (...values) => {
   return 0;
 };
 
+const EMPTY_PATIENT = {
+  mobile: "",
+  title: "",
+  firstName: "",
+  lastName: "",
+  sex: "",
+  years: "",
+  months: "",
+  days: "",
+  uhid: "",
+  online: false,
+  email: "",
+  address: "",
+  aadhaar: "",
+  history: "",
+};
+
+const MODALITIES = [
+  { key: "lab", label: "LAB", icon: FlaskConical },
+  { key: "usg", label: "USG", icon: Scan },
+  { key: "digitalXray", label: "DIGITAL XRAY", icon: ScanLine },
+  { key: "xray", label: "XRAY", icon: Radio },
+  { key: "outsource", label: "OUTSOURCE LAB", icon: Microscope },
+  { key: "ecg", label: "ECG", icon: Activity },
+  { key: "ctScan", label: "CT SCAN", icon: Scan },
+  { key: "mri", label: "MRI", icon: Monitor },
+  { key: "eps", label: "EPS", icon: Waves },
+  { key: "opg", label: "OPG", icon: Bone },
+  { key: "cardiology", label: "CARDIOLOGY", icon: HeartPulse },
+  { key: "eeg", label: "EEG", icon: Brain },
+  { key: "mammography", label: "MAMMOGRAPHY", icon: Image },
+];
+
+const EMPTY_INVESTIGATIONS = () =>
+  Object.fromEntries(MODALITIES.map(({ key }) => [key, []]));
+
+const EMPTY_INVESTIGATION_PAYMENTS = () =>
+  Object.fromEntries(
+    MODALITIES.map(({ key }) => [
+      key,
+      {
+        paid: "",
+        discount: 0,
+      },
+    ]),
+  );
+
+const getInvestigationTitle = (key) => {
+  const titles = {
+    lab: "Lab Investigations",
+    usg: "USG Investigations",
+    digitalXray: "Digital X-ray Investigations",
+    xray: "X-ray Investigations",
+    outsource: "Outsource Lab Investigations",
+    ecg: "ECG Investigations",
+    ctScan: "CT Scan Investigations",
+    mri: "MRI Investigations",
+    eps: "EPS Investigations",
+    opg: "OPG Investigations",
+    cardiology: "Cardiology Investigations",
+    eeg: "EEG Investigations",
+    mammography: "Mammography Investigations",
+  };
+
+  return titles[key] || "Investigations";
+};
+
+const normalizeTests = (tests, prefix) => {
+  if (!Array.isArray(tests)) return [];
+
+  return tests.map((test, index) => ({
+    ...test,
+    id: getId(test) || `${prefix}-${index}`,
+    name:
+      test.name ?? test.testName ?? test.investigationName ?? test.title ?? "",
+    price: getNumericValue(test.price, test.rate, test.amount, test.total),
+  }));
+};
+
+const getTestArraysFromBill = (bill) => {
+  const result = EMPTY_INVESTIGATIONS();
+  const source = bill.investigations ?? bill.tests ?? bill.items ?? {};
+
+  if (Array.isArray(source)) {
+    source.forEach((test, index) => {
+      const type = String(
+        test.type ?? test.category ?? test.modality ?? "lab",
+      ).toLowerCase();
+
+      const modality = MODALITIES.find(
+        (item) =>
+          item.key.toLowerCase() === type || item.label.toLowerCase() === type,
+      );
+
+      const key = modality?.key || (test.outsource ? "outsource" : "lab");
+
+      result[key].push({
+        ...test,
+        id: getId(test) || `${key}-${index}`,
+        name:
+          test.name ??
+          test.testName ??
+          test.investigationName ??
+          test.title ??
+          "",
+        price: getNumericValue(test.price, test.rate, test.amount, test.total),
+      });
+    });
+
+    return result;
+  }
+
+  const aliases = {
+    lab: ["lab", "labTests"],
+    usg: ["usg", "usgTests"],
+    digitalXray: ["digitalXray", "digitalXrayTests", "digital_xray"],
+    xray: ["xray", "xrayTests"],
+    outsource: ["outsource", "outsourceTests"],
+    ecg: ["ecg", "ecgTests"],
+    ctScan: ["ctScan", "ctScanTests", "ct", "ctTests"],
+    mri: ["mri", "mriTests"],
+    eps: ["eps", "epsTests"],
+    opg: ["opg", "opgTests"],
+    cardiology: ["cardiology", "cardiologyTests"],
+    eeg: ["eeg", "eegTests"],
+    mammography: ["mammography", "mammographyTests"],
+  };
+
+  MODALITIES.forEach(({ key }) => {
+    const testsKey = aliases[key]?.find((name) => Array.isArray(source[name]));
+
+    result[key] = normalizeTests(testsKey ? source[testsKey] : [], key);
+  });
+
+  if (Array.isArray(bill.investigationItems)) {
+    bill.investigationItems.forEach((test, index) => {
+      const type = String(
+        test.type ?? test.category ?? test.modality ?? "lab",
+      ).toLowerCase();
+
+      const modality = MODALITIES.find(
+        (item) =>
+          item.key.toLowerCase() === type || item.label.toLowerCase() === type,
+      );
+
+      const key = modality?.key || (test.outsource ? "outsource" : "lab");
+
+      const testId = getId(test);
+
+      if (
+        !result[key].some(
+          (existing) => testId && String(getId(existing)) === String(testId),
+        )
+      ) {
+        result[key].push({
+          ...test,
+          id: testId || `${key}-extra-${index}`,
+          name:
+            test.name ??
+            test.testName ??
+            test.investigationName ??
+            test.title ??
+            "",
+          price: getNumericValue(
+            test.price,
+            test.rate,
+            test.amount,
+            test.total,
+          ),
+        });
+      }
+    });
+  }
+
+  return result;
+};
+
+const OPTIONAL_FIELDS = [
+  {
+    key: "email",
+    label: "Email",
+    placeholder: "Enter email address",
+    type: "email",
+  },
+  {
+    key: "address",
+    label: "Address",
+    placeholder: "Enter patient address",
+    type: "textarea",
+  },
+  {
+    key: "aadhaar",
+    label: "Aadhaar",
+    placeholder: "Enter Aadhaar number",
+    type: "text",
+  },
+  {
+    key: "history",
+    label: "Patient history",
+    placeholder: "Enter patient history",
+    type: "textarea",
+  },
+];
+
 export default function NewBill() {
   const navigate = useNavigate();
   const { id: editId } = useParams();
   const isEditMode = Boolean(editId);
 
-  const [patient, setPatient] = useState({
-    mobile: "",
-    title: "",
-    firstName: "",
-    lastName: "",
-    sex: "",
-    years: "",
-    months: "",
-    days: "",
-    uhid: "",
-    online: false,
-  });
+  const [patient, setPatient] = useState({ ...EMPTY_PATIENT });
+  const [optionalSections, setOptionalSections] = useState([]);
 
   const [paymentMode, setPaymentMode] = useState("cash");
   const [remarks, setRemarks] = useState("");
+
   const [creating, setCreating] = useState(false);
   const [loadingBill, setLoadingBill] = useState(false);
   const [createError, setCreateError] = useState("");
 
   const [modal, setModal] = useState(null);
-  const [mode, setMode] = useState(null);
+  const [selectedModality, setSelectedModality] = useState("lab");
 
   const [referrers, setReferrers] = useState([]);
   const [referrer, setReferrer] = useState("");
@@ -132,21 +334,56 @@ export default function NewBill() {
   const [agents, setAgents] = useState([]);
   const [agent, setAgent] = useState("");
 
-  const [lab, setLab] = useState([]);
-  const [outsource, setOutsource] = useState([]);
+  const [investigations, setInvestigations] = useState(EMPTY_INVESTIGATIONS);
 
-  const [discount, setDiscount] = useState(0);
-  const [received, setReceived] = useState(0);
-  const [charge, setCharge] = useState(0);
+  const [activeModalities, setActiveModalities] = useState([]);
 
-  // Load referrers and sample collection agents.
+  // Overall bill payment fields.
+  const [discount, setDiscount] = useState("0");
+  const [received, setReceived] = useState("0");
+  const [charge, setCharge] = useState("0");
+
+  // Independent Paid and Discount values for every investigation.
+  const [investigationPayments, setInvestigationPayments] = useState(
+    EMPTY_INVESTIGATION_PAYMENTS,
+  );
+
+  const p = (key, value) => {
+    setPatient((current) => ({
+      ...current,
+      [key]: value,
+    }));
+  };
+
+  const updateInvestigationPayment = (modality, field, value) => {
+    setInvestigationPayments((current) => ({
+      ...current,
+      [modality]: {
+        paid: "",
+        discount: "0",
+        ...(current[modality] || {}),
+        [field]: value,
+      },
+    }));
+  };
+
+  const addOptionalField = (key) => {
+    setOptionalSections((current) =>
+      current.includes(key) ? current : [...current, key],
+    );
+  };
+
+  const removeOptionalField = (key) => {
+    setOptionalSections((current) => current.filter((item) => item !== key));
+
+    p(key, "");
+  };
+
+  // Load referrers and agents.
   useEffect(() => {
     let cancelled = false;
 
-    Promise.all([
-      referrerApiService.list(),
-      agentApiService.list(),
-    ])
+    Promise.all([referrerApiService.list(), agentApiService.list()])
       .then(([referrerResponse, agentResponse]) => {
         if (cancelled) return;
 
@@ -154,7 +391,7 @@ export default function NewBill() {
         setAgents(apiArray(agentResponse));
       })
       .catch(() => {
-        // Keep the bill form usable if these lists fail to load.
+        // Keep the form usable if these lists cannot be loaded.
       });
 
     return () => {
@@ -162,7 +399,7 @@ export default function NewBill() {
     };
   }, []);
 
-  // Load the selected bill and populate the form.
+  // Load an existing bill when Modify is selected.
   useEffect(() => {
     if (!editId) return;
 
@@ -182,23 +419,15 @@ export default function NewBill() {
 
         if (cancelled) return;
 
-        // Patient information may be stored in different fields.
         const patientData =
           bill.patientDetails ??
           bill.patientInfo ??
-          (
-            bill.patient && typeof bill.patient === "object"
-              ? bill.patient
-              : null
-          ) ??
+          (bill.patient && typeof bill.patient === "object"
+            ? bill.patient
+            : null) ??
           {};
 
-        const parsedName = splitPatientName(
-          getPatientName(bill, patientData),
-        );
-
-        const patientTitle =
-          patientData.title || parsedName.title;
+        const parsedName = splitPatientName(getPatientName(bill, patientData));
 
         setPatient({
           mobile: String(
@@ -210,7 +439,7 @@ export default function NewBill() {
               bill.phone ??
               "",
           ),
-          title: patientTitle,
+          title: patientData.title || parsedName.title,
           firstName: String(
             patientData.firstName ??
               patientData.first_name ??
@@ -259,19 +488,30 @@ export default function NewBill() {
           ),
           online: Boolean(
             patientData.online ??
-              patientData.onlineReportRequested ??
-              bill.online ??
-              false,
+            patientData.onlineReportRequested ??
+            bill.online ??
+            false,
+          ),
+          email: String(patientData.email ?? bill.email ?? ""),
+          address: String(patientData.address ?? bill.address ?? ""),
+          aadhaar: String(
+            patientData.aadhaar ??
+              patientData.aadhaarNumber ??
+              bill.aadhaar ??
+              "",
+          ),
+          history: String(
+            patientData.history ??
+              patientData.patientHistory ??
+              bill.history ??
+              "",
           ),
         });
 
-        // Referrer and agent may be stored as objects or IDs.
         const referrerValue =
           bill.referrerId ??
           getId(bill.referrer) ??
-          (typeof bill.referrer === "string"
-            ? bill.referrer
-            : "") ??
+          (typeof bill.referrer === "string" ? bill.referrer : "") ??
           "";
 
         const agentValue =
@@ -284,117 +524,76 @@ export default function NewBill() {
         setReferrer(String(referrerValue));
         setAgent(String(agentValue));
 
-        // Support both { lab, outsource } and flat-array formats.
-        const investigations =
-          bill.investigations ??
-          bill.tests ??
-          bill.items ??
-          {};
+        const loadedInvestigations = getTestArraysFromBill(bill);
 
-        const investigationArray = Array.isArray(investigations)
-          ? investigations
-          : Array.isArray(bill.investigationItems)
-            ? bill.investigationItems
-            : [];
+        setInvestigations(loadedInvestigations);
 
-        const labTests = Array.isArray(investigations)
-          ? investigationArray.filter(
-              (test) =>
-                String(test.type ?? test.category ?? "")
-                  .toLowerCase() !== "outsource" &&
-                !test.outsource,
-            )
-          : Array.isArray(investigations.lab)
-            ? investigations.lab
-            : Array.isArray(investigations.labTests)
-              ? investigations.labTests
-              : [];
+        setActiveModalities(
+          MODALITIES.filter(
+            ({ key }) => loadedInvestigations[key]?.length > 0,
+          ).map(({ key }) => key),
+        );
 
-        const outsourceTests = Array.isArray(investigations)
-          ? investigationArray.filter(
-              (test) =>
-                String(test.type ?? test.category ?? "")
-                  .toLowerCase() === "outsource" ||
-                Boolean(test.outsource),
-            )
-          : Array.isArray(investigations.outsource)
-            ? investigations.outsource
-            : Array.isArray(investigations.outsourceTests)
-              ? investigations.outsourceTests
-              : [];
+        const savedPayments = bill.investigationPayments ?? {};
 
-        const normalizeTests = (tests, prefix) =>
-          tests.map((test, index) => ({
-            ...test,
-            id: getId(test) || `${prefix}-${index}`,
-            name:
-              test.name ??
-              test.testName ??
-              test.investigationName ??
-              test.title ??
-              "",
-            price: getNumericValue(
-              test.price,
-              test.rate,
-              test.amount,
-              test.total,
-            ),
-          }));
+        setInvestigationPayments(
+          Object.fromEntries(
+            MODALITIES.map(({ key }) => {
+              const saved = savedPayments[key] ?? {};
 
-        setLab(normalizeTests(labTests, "lab"));
-        setOutsource(normalizeTests(outsourceTests, "outsource"));
+              return [
+                key,
+                {
+                  paid: String(saved.paid ?? ""),
+                  discount: String(saved.discount ?? "0"),
+                },
+              ];
+            }),
+          ),
+        );
 
         const payment = bill.payment ?? bill.paymentDetails ?? {};
 
-        setDiscount(
-          getNumericValue(payment.discount, bill.discount),
-        );
+        setDiscount(String(getNumericValue(payment.discount, bill.discount)));
 
         setReceived(
-          getNumericValue(
-            payment.received,
-            payment.amountReceived,
-            bill.paid,
-            bill.amountReceived,
+          String(
+            getNumericValue(
+              payment.received,
+              payment.amountReceived,
+              bill.paid,
+              bill.amountReceived,
+            ),
           ),
         );
 
         setCharge(
-          getNumericValue(
-            payment.collectionCharge,
-            bill.collectionCharge,
+          String(
+            getNumericValue(payment.collectionCharge, bill.collectionCharge),
           ),
         );
 
         setPaymentMode(
-          payment.mode ??
-            payment.paymentMode ??
-            bill.paymentMode ??
-            "cash",
+          payment.mode ?? payment.paymentMode ?? bill.paymentMode ?? "cash",
         );
 
-        setRemarks(
-          String(payment.remarks ?? bill.remarks ?? ""),
-        );
+        setRemarks(String(payment.remarks ?? bill.remarks ?? ""));
 
-        if (labTests.length > 0) {
-          setMode("lab");
-        } else if (outsourceTests.length > 0) {
-          setMode("outsource");
-        } else {
-          setMode(null);
-        }
+        setOptionalSections(
+          OPTIONAL_FIELDS.filter(({ key }) => {
+            const value = patientData[key] ?? bill[key];
+
+            return value !== undefined && value !== null && value !== "";
+          }).map(({ key }) => key),
+        );
       } catch (error) {
         if (!cancelled) {
           setCreateError(
-            error?.message ||
-              "Could not load this bill. Please try again.",
+            error?.message || "Could not load this bill. Please try again.",
           );
         }
       } finally {
-        if (!cancelled) {
-          setLoadingBill(false);
-        }
+        if (!cancelled) setLoadingBill(false);
       }
     }
 
@@ -405,37 +604,69 @@ export default function NewBill() {
     };
   }, [editId]);
 
-  const total = useMemo(
+  // Sum the prices of all added investigations.
+  const investigationTotal = useMemo(
     () =>
-      [...lab, ...outsource].reduce(
-        (sum, test) => sum + Number(test.price || 0),
-        0,
-      ) + Number(charge || 0),
-    [lab, outsource, charge],
+      Object.values(investigations)
+        .flat()
+        .reduce((sum, test) => sum + getNumericValue(test.price), 0),
+    [investigations],
   );
 
+  // Overall total includes investigation prices and collection charge.
+  const total = investigationTotal + getNumericValue(charge);
+
+  // Overall balance is calculated separately from investigation-level payments.
   const balance = Math.max(
     0,
-    total - Number(discount || 0) - Number(received || 0),
+    total - getNumericValue(discount) - getNumericValue(received),
   );
 
-  const p = (key, value) =>
-    setPatient((current) => ({
-      ...current,
-      [key]: value,
-    }));
+  const toggleModality = (key) => {
+    if (activeModalities.includes(key)) {
+      setActiveModalities((current) => current.filter((item) => item !== key));
 
-  const addTest = (kind, test) => {
+      setInvestigations((current) => ({
+        ...current,
+        [key]: [],
+      }));
+
+      setInvestigationPayments((current) => ({
+        ...current,
+        [key]: {
+          paid: "",
+          discount: "0",
+        },
+      }));
+
+      return;
+    }
+
+    setActiveModalities((current) => [...current, key]);
+  };
+
+  const addTest = (key, test) => {
     const newTest = {
       ...test,
-      id: `${kind}-${Date.now()}-${Math.random()}`,
+      id: `${key}-${Date.now()}-${Math.random()}`,
+      price: getNumericValue(test.price),
     };
 
-    if (kind === "lab") {
-      setLab((current) => [...current, newTest]);
-    } else {
-      setOutsource((current) => [...current, newTest]);
-    }
+    setInvestigations((current) => ({
+      ...current,
+      [key]: [...(current[key] || []), newTest],
+    }));
+
+    setActiveModalities((current) =>
+      current.includes(key) ? current : [...current, key],
+    );
+  };
+
+  const removeTest = (key, id) => {
+    setInvestigations((current) => ({
+      ...current,
+      [key]: current[key].filter((test) => String(test.id) !== String(id)),
+    }));
   };
 
   async function createBill() {
@@ -446,26 +677,41 @@ export default function NewBill() {
       return;
     }
 
-    if (
-      !patient.title ||
-      !patient.firstName.trim() ||
-      !patient.sex
-    ) {
+    if (!patient.title || !patient.firstName.trim() || !patient.sex) {
       setCreateError("Please fill in the required patient details.");
       return;
     }
 
-    if (
-      patient.years === "" &&
-      patient.months === "" &&
-      patient.days === ""
-    ) {
+    if (patient.years === "" && patient.months === "" && patient.days === "") {
       setCreateError("Please enter the patient's age.");
       return;
     }
 
-    if (!lab.length && !outsource.length) {
+    const hasInvestigations = Object.values(investigations).some(
+      (tests) => tests.length > 0,
+    );
+
+    if (!hasInvestigations) {
       setCreateError("Please add at least one investigation.");
+      return;
+    }
+
+    const invalidPayment = MODALITIES.some(({ key }) => {
+      const payment = investigationPayments[key] || {};
+
+      return (
+        getNumericValue(payment.paid) < 0 ||
+        getNumericValue(payment.discount) < 0
+      );
+    });
+
+    if (
+      invalidPayment ||
+      getNumericValue(discount) < 0 ||
+      getNumericValue(received) < 0 ||
+      getNumericValue(charge) < 0
+    ) {
+      setCreateError("Payment amounts cannot be negative.");
       return;
     }
 
@@ -478,6 +724,36 @@ export default function NewBill() {
 
       const selectedAgent = agents.find(
         (item) => String(getId(item) || item.name) === String(agent),
+      );
+
+      const referrerName = selectedReferrer
+        ? [
+            selectedReferrer.title,
+            selectedReferrer.firstName,
+            selectedReferrer.lastName,
+          ]
+            .filter(Boolean)
+            .join(" ")
+        : "Self";
+
+      const investigationsPayload = Object.fromEntries(
+        MODALITIES.map(({ key }) => [
+          key,
+          investigations[key].map(({ id, _id, ...test }) => ({
+            ...test,
+            price: getNumericValue(test.price),
+          })),
+        ]),
+      );
+
+      const investigationPaymentsPayload = Object.fromEntries(
+        MODALITIES.map(({ key }) => [
+          key,
+          {
+            paid: getNumericValue(investigationPayments[key]?.paid),
+            discount: getNumericValue(investigationPayments[key]?.discount),
+          },
+        ]),
       );
 
       const payload = {
@@ -496,31 +772,31 @@ export default function NewBill() {
           .join(" "),
 
         referrerId: referrer || null,
-
-        referrerName: selectedReferrer
-          ? [
-              selectedReferrer.title,
-              selectedReferrer.firstName,
-              selectedReferrer.lastName,
-            ]
-                .filter(Boolean)
-                .join(" ")
-          : "Self",
+        referrerName,
 
         sampleCollectionAgentId: agent || null,
         sampleCollectionAgentName: selectedAgent?.name || "",
+
         collectionCentre: "Main",
 
-        investigations: {
-          lab: lab.map(({ id, _id, ...test }) => test),
-          outsource: outsource.map(({ id, _id, ...test }) => test),
-        },
+        investigations: investigationsPayload,
+
+        investigationPayments: investigationPaymentsPayload,
+
+        investigationItems: MODALITIES.flatMap(({ key }) =>
+          investigations[key].map((test) => ({
+            ...test,
+            price: getNumericValue(test.price),
+            type: key,
+            modality: key,
+          })),
+        ),
 
         payment: {
           total: Number(total),
-          discount: Number(discount || 0),
-          received: Number(received || 0),
-          collectionCharge: Number(charge || 0),
+          discount: getNumericValue(discount),
+          received: getNumericValue(received),
+          collectionCharge: getNumericValue(charge),
           balance: Number(balance),
           mode: paymentMode,
           remarks: remarks.trim(),
@@ -533,10 +809,7 @@ export default function NewBill() {
       } else {
         const response = await billingApiService.create(payload);
         const savedBill = getResponseData(response);
-
-        const savedId =
-          getId(savedBill) ||
-          getId(savedBill?.bill);
+        const savedId = getId(savedBill) || getId(savedBill?.bill);
 
         if (!savedId) {
           throw new Error("The server did not return the created bill ID.");
@@ -546,8 +819,7 @@ export default function NewBill() {
       }
     } catch (error) {
       setCreateError(
-        error?.message &&
-          error.message !== "[object Object]"
+        error?.message && error.message !== "[object Object]"
           ? error.message
           : isEditMode
             ? "Could not update the bill. Check the billing API and backend."
@@ -565,9 +837,7 @@ export default function NewBill() {
         <b>{isEditMode ? "Modify bill" : "New bill"}</b>
       </div>
 
-      {loadingBill && (
-        <p className="bills-message">Loading bill details...</p>
-      )}
+      {loadingBill && <p className="bills-message">Loading bill details...</p>}
 
       {createError && (
         <div className="api-error" role="alert">
@@ -577,8 +847,14 @@ export default function NewBill() {
 
       <fieldset
         disabled={loadingBill || creating}
-        style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}
+        style={{
+          border: 0,
+          padding: 0,
+          margin: 0,
+          minWidth: 0,
+        }}
       >
+        {/* PATIENT DETAILS */}
         <section className="nb-section">
           <i className="nb-step">1</i>
           <h2>Patient details</h2>
@@ -587,6 +863,7 @@ export default function NewBill() {
 
           <div className="nb-mobile">
             <span>+91</span>
+
             <input
               type="tel"
               inputMode="numeric"
@@ -596,12 +873,10 @@ export default function NewBill() {
               maxLength={10}
               value={patient.mobile}
               onChange={(event) =>
-                p(
-                  "mobile",
-                  event.target.value.replace(/\D/g, "").slice(0, 10),
-                )
+                p("mobile", event.target.value.replace(/\D/g, "").slice(0, 10))
               }
             />
+
             <Search size={16} aria-hidden="true" />
           </div>
 
@@ -628,6 +903,7 @@ export default function NewBill() {
 
             <div>
               <label>Sex*</label>
+
               <div className="nb-sex">
                 {["MALE", "FEMALE", "OTHER"].map((sex) => (
                   <button
@@ -644,6 +920,7 @@ export default function NewBill() {
           </div>
 
           <label>Age*</label>
+
           <div className="nb-age">
             {["years", "months", "days"].map((key) => (
               <input
@@ -657,15 +934,6 @@ export default function NewBill() {
             ))}
           </div>
 
-          <label>UHID</label>
-          <div className="nb-uhid">
-            <input
-              value={patient.uhid}
-              onChange={(event) => p("uhid", event.target.value)}
-            />
-            <Search size={15} />
-          </div>
-
           <label className="nb-check">
             <input
               type="checkbox"
@@ -675,14 +943,77 @@ export default function NewBill() {
             Online report requested
           </label>
 
+          <div className="nb-optional-fields">
+            {optionalSections.map((key) => {
+              const field = OPTIONAL_FIELDS.find((item) => item.key === key);
+
+              if (!field) return null;
+
+              return (
+                <div className="nb-optional-field" key={field.key}>
+                  <div className="nb-optional-heading">
+                    <label htmlFor={`patient-${field.key}`}>
+                      {field.label}
+                      <span className="nb-optional-badge">Optional</span>
+                    </label>
+
+                    <button
+                      type="button"
+                      className="nb-remove-field"
+                      onClick={() => removeOptionalField(field.key)}
+                    >
+                      <X size={13} />
+                      Remove
+                    </button>
+                  </div>
+
+                  {field.type === "textarea" ? (
+                    <textarea
+                      id={`patient-${field.key}`}
+                      value={patient[field.key]}
+                      placeholder={field.placeholder}
+                      onChange={(event) => p(field.key, event.target.value)}
+                      rows={3}
+                    />
+                  ) : (
+                    <input
+                      id={`patient-${field.key}`}
+                      type={field.type}
+                      value={patient[field.key]}
+                      placeholder={field.placeholder}
+                      maxLength={field.key === "aadhaar" ? 12 : undefined}
+                      onChange={(event) =>
+                        p(
+                          field.key,
+                          field.key === "aadhaar"
+                            ? event.target.value.replace(/\D/g, "").slice(0, 12)
+                            : event.target.value,
+                        )
+                      }
+                    />
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
           <div className="nb-pills">
-            <button type="button">◉ Email</button>
-            <button type="button">◉ Address</button>
-            <button type="button">◉ Aadhaar</button>
-            <button type="button">◉ Patient history</button>
+            {OPTIONAL_FIELDS.filter(
+              (field) => !optionalSections.includes(field.key),
+            ).map((field) => (
+              <button
+                type="button"
+                key={field.key}
+                onClick={() => addOptionalField(field.key)}
+              >
+                <Plus size={12} />
+                {field.label}
+              </button>
+            ))}
           </div>
         </section>
 
+        {/* CASE DETAILS */}
         <section className="nb-section">
           <i className="nb-step">2</i>
           <h2>Case details</h2>
@@ -690,23 +1021,21 @@ export default function NewBill() {
           <div className="nb-case-grid">
             <div>
               <label>* Referred By</label>
+
               <div className="nb-inline">
                 <select
                   value={referrer}
                   onChange={(event) => setReferrer(event.target.value)}
                 >
                   <option value="">Select referrer</option>
+
                   {referrers.map((item, index) => (
                     <option
                       key={getId(item) || index}
                       value={getId(item) || item.name}
                     >
                       {item.name ||
-                        [
-                          item.title,
-                          item.firstName,
-                          item.lastName,
-                        ]
+                        [item.title, item.firstName, item.lastName]
                           .filter(Boolean)
                           .join(" ")}
                     </option>
@@ -722,7 +1051,11 @@ export default function NewBill() {
                 </button>
               </div>
 
-              <button type="button" className="nb-link">
+              <button
+                type="button"
+                className="nb-link"
+                onClick={() => navigate("/cases/referral-doctors")}
+              >
                 <List size={13} /> Manage referrers
               </button>
             </div>
@@ -737,11 +1070,13 @@ export default function NewBill() {
 
             <div>
               <label>Sample collection agent</label>
+
               <select
                 value={agent}
                 onChange={(event) => setAgent(event.target.value)}
               >
                 <option value="">Select agent</option>
+
                 {agents.map((item, index) => (
                   <option
                     key={getId(item) || index}
@@ -759,72 +1094,80 @@ export default function NewBill() {
               >
                 <Plus size={12} /> Add new
               </button>
-
-              <button type="button" className="nb-link">
-                <Pencil size={11} /> Edit
-              </button>
             </div>
           </div>
 
-          <div className="nb-lab-buttons">
-            <button
-              type="button"
-              className={mode === "lab" ? "on" : ""}
-              onClick={() => setMode("lab")}
-            >
-              ▣<span>LAB</span>
-            </button>
+          {/* INVESTIGATION MODALITIES */}
+          <div
+            className="nb-lab-buttons nb-modality-grid"
+            aria-label="Investigation modalities"
+          >
+            {MODALITIES.map(({ key, label, icon: Icon }) => {
+              const selected = activeModalities.includes(key);
 
-            <button
-              type="button"
-              className={mode === "outsource" ? "on" : ""}
-              onClick={() => setMode("outsource")}
-            >
-              ▣<span>OUTSOURCE LAB</span>
-            </button>
+              return (
+                <button
+                  type="button"
+                  key={key}
+                  className={`nb-modality-button ${selected ? "on" : ""}`}
+                  aria-pressed={selected}
+                  title={
+                    selected
+                      ? `Remove ${label} section`
+                      : `Add ${label} section`
+                  }
+                  onClick={() => toggleModality(key)}
+                >
+                  <span className="nb-modality-icon">
+                    <Icon size={18} strokeWidth={2} />
+                  </span>
+
+                  <span>{label}</span>
+                </button>
+              );
+            })}
           </div>
 
-          {mode && (
+          {/* INVESTIGATIONS WITH INDEPENDENT PAID AND DISCOUNT */}
+          {activeModalities.map((key) => (
             <Investigation
-              mode={mode}
-              rows={mode === "lab" ? lab : outsource}
-              add={() =>
-                setModal(mode === "lab" ? "labtest" : "outtest")
+              key={key}
+              modality={key}
+              rows={investigations[key] || []}
+              payment={investigationPayments[key] || { paid: "", discount: 0 }}
+              onPaymentChange={(field, value) =>
+                updateInvestigationPayment(key, field, value)
               }
-              remove={(id) => {
-                if (mode === "lab") {
-                  setLab((current) =>
-                    current.filter((test) => test.id !== id),
-                  );
-                } else {
-                  setOutsource((current) =>
-                    current.filter((test) => test.id !== id),
-                  );
-                }
+              add={() => {
+                setSelectedModality(key);
+                setModal("test");
+              }}
+              remove={(id) => removeTest(key, id)}
+              removeSection={() => toggleModality(key)}
+              setSelectedModality={setSelectedModality}
+              openRateList={() => {
+                setSelectedModality(key);
+                setModal("ratelist");
               }}
             />
-          )}
+          ))}
 
+          {/* OVERALL PAYMENT DETAILS */}
           <div className="nb-payment">
             <b>Payment Details:</b>
 
             <div>
               <Pay label="Total: Rs." value={total} plain />
+
               <Pay label="Discount" value={discount} set={setDiscount} />
-              <Pay
-                label="Amount received"
-                value={received}
-                set={setReceived}
-              />
-              <Pay
-                label="Balance: Rs."
-                value={balance}
-                plain
-                red
-              />
+
+              <Pay label="Amount received" value={received} set={setReceived} />
+
+              <Pay label="Balance: Rs." value={balance} plain red />
 
               <div className="nb-pay">
                 <label>Mode:</label>
+
                 <select
                   value={paymentMode}
                   onChange={(event) => setPaymentMode(event.target.value)}
@@ -838,6 +1181,7 @@ export default function NewBill() {
 
               <div className="nb-pay">
                 <label>Remarks:</label>
+
                 <input
                   value={remarks}
                   onChange={(event) => setRemarks(event.target.value)}
@@ -846,17 +1190,16 @@ export default function NewBill() {
               </div>
             </div>
 
-            {mode && (
-              <div className="nb-charge">
-                <label>Collection Charge:</label>
-                <input
-                  type="number"
-                  min="0"
-                  value={charge}
-                  onChange={(event) => setCharge(event.target.value)}
-                />
-              </div>
-            )}
+            <div className="nb-charge">
+              <label>Collection Charge:</label>
+
+              <input
+                type="number"
+                min="0"
+                value={charge}
+                onChange={(event) => setCharge(event.target.value)}
+              />
+            </div>
           </div>
 
           <div className="nb-actions">
@@ -886,12 +1229,14 @@ export default function NewBill() {
         </section>
       </fieldset>
 
+      {/* ADD REFERRER */}
       {modal === "ref" && (
         <RefModal
           close={() => setModal(null)}
           save={async (values) => {
             try {
               const response = await referrerApiService.create(values);
+
               const result = getResponseData(response);
               const item = result?.referrer ?? result;
 
@@ -899,18 +1244,24 @@ export default function NewBill() {
               setReferrer(String(getId(item) || item.name));
               setModal(null);
             } catch (error) {
-              setCreateError(error?.message || "Could not create the referrer.");
+              setCreateError(
+                error?.message || "Could not create the referrer.",
+              );
             }
           }}
         />
       )}
 
+      {/* ADD SAMPLE COLLECTION AGENT */}
       {modal === "agent" && (
         <AgentModal
           close={() => setModal(null)}
           save={async (name) => {
             try {
-              const response = await agentApiService.create({ name });
+              const response = await agentApiService.create({
+                name,
+              });
+
               const result = getResponseData(response);
               const item = result?.agent ?? result;
 
@@ -919,26 +1270,24 @@ export default function NewBill() {
               setModal(null);
             } catch (error) {
               setCreateError(
-                error?.message || "Could not create the sample collection agent.",
+                error?.message ||
+                  "Could not create the sample collection agent.",
               );
             }
           }}
         />
       )}
 
-      {(modal === "labtest" || modal === "outtest") && (
+      {/* ADD INVESTIGATION */}
+      {modal === "test" && (
         <TestModal
-          title={
-            modal === "labtest"
-              ? "Add lab investigation"
-              : "Add outsource lab investigation"
-          }
+          title={`Add ${getInvestigationTitle(selectedModality).replace(
+            " Investigations",
+            "",
+          )} investigation`}
           close={() => setModal(null)}
           save={(test) => {
-            addTest(
-              modal === "labtest" ? "lab" : "outsource",
-              test,
-            );
+            addTest(selectedModality, test);
             setModal(null);
           }}
         />
@@ -947,6 +1296,7 @@ export default function NewBill() {
       {modal === "settings" && (
         <Modal title="Bill settings" close={() => setModal(null)}>
           <p>Bill settings can be configured here.</p>
+
           <button
             type="button"
             className="nb-primary"
@@ -964,6 +1314,7 @@ function Field({ label, type, value, set, options = [] }) {
   return (
     <div>
       <label>{label}</label>
+
       {type === "select" ? (
         <select value={value} onChange={(event) => set(event.target.value)}>
           {options.map((option, index) => (
@@ -983,6 +1334,7 @@ function Pay({ label, value, set, plain, red }) {
   return (
     <div className={`nb-pay ${red ? "red" : ""}`}>
       <label>{label}</label>
+
       {plain ? (
         <span>{value}</span>
       ) : (
@@ -996,59 +1348,222 @@ function Pay({ label, value, set, plain, red }) {
     </div>
   );
 }
+function Investigation({
+  modality,
+  rows,
+  add,
+  remove,
+  removeSection,
+  payment,
+  onPaymentChange,
+  openRateList,
+}) {
+  // Available investigation tests
+  const investigationTests = [
+    { id: "abg", name: "ABG", price: 100 },
+    { id: "ada", name: "ADA", price: 100 },
+    { id: "aec", name: "AEC", price: 100 },
+    { id: "afb", name: "AFB", price: 100 },
+    { id: "afp", name: "AFP", price: 100 },
+    { id: "amylase", name: "Amylase", price: 250 },
+    { id: "bilirubin", name: "Bilirubin", price: 150 },
+    { id: "cbc", name: "CBC", price: 200 },
+    { id: "creatinine", name: "Creatinine", price: 120 },
+    { id: "crp", name: "CRP", price: 300 },
+  ];
 
-function Investigation({ mode, rows, add, remove }) {
-  const sum = rows.reduce(
-    (total, test) => total + Number(test.price || 0),
-    0,
+  /*
+   * Initialize state: use passed rows if available, otherwise default to an empty list.
+   */
+  const [selectedTests, setSelectedTests] = useState(rows ?? []);
+
+  /*
+   * Keep selectedTests in sync if parent updates the rows prop.
+   */
+  useEffect(() => {
+    if (rows) {
+      setSelectedTests(rows);
+    }
+  }, [rows]);
+
+  /*
+   * Calculate total
+   */
+  const sum = selectedTests.reduce(
+    (total, test) => total + getNumericValue(test.price),
+    0
   );
+
+  /*
+   * Payment values
+   */
+  const paid = getNumericValue(payment?.paid);
+  const testDiscount = getNumericValue(payment?.discount);
+
+  /*
+   * Due amount
+   */
+  const due = Math.max(0, sum - paid - testDiscount);
+
+  /*
+   * Select another investigation directly.
+   */
+  const handleSelectTest = (event) => {
+    const selectedId = event.target.value;
+
+    if (!selectedId) return;
+
+    const selectedTest = investigationTests.find(
+      (test) => test.id === selectedId
+    );
+
+    if (!selectedTest) return;
+
+    // Prevent duplicate test selection
+    const alreadyExists = selectedTests.some(
+      (test) => test.id === selectedTest.id
+    );
+
+    if (!alreadyExists) {
+      setSelectedTests((prev) => [...prev, selectedTest]);
+    }
+
+    // Reset dropdown value after selection
+    event.target.value = "";
+  };
+
+  /*
+   * Remove investigation from the displayed list
+   */
+  const handleRemoveTest = (testId) => {
+    setSelectedTests((prev) =>
+      prev.filter((test) => test.id !== testId)
+    );
+
+    if (remove) {
+      remove(testId);
+    }
+  };
 
   return (
     <div className="nb-invest">
-      <b>×</b>
-      <div>
-        <label>
-          {mode === "lab"
-            ? "Lab Investigations"
-            : "Outsource Lab Investigations"}
-        </label>
+      {/* Remove complete investigation modality */}
+      <button
+        type="button"
+        className="nb-remove-modality"
+        title={`Remove ${getInvestigationTitle(modality)}`}
+        aria-label={`Remove ${getInvestigationTitle(modality)}`}
+        onClick={removeSection}
+      >
+        <X size={15} />
+      </button>
 
-        <div className="nb-tests">
-          {rows.map((test) => (
-            <span key={test.id}>
-              {test.name} · Rs.{test.price}
+      <div className="nb-invest-content">
+        <div className="nb-invest-header">
+          <div className="nb-invest-main">
+            {/* Investigation title */}
+            <label className="nb-invest-title">
+              {getInvestigationTitle(modality)}
+            </label>
+
+            {/* INVESTIGATION TEST LIST */}
+            <div className="nb-tests">
+              {/* Dropdown */}
+              <select
+                className="nb-test-select"
+                defaultValue=""
+                onChange={handleSelectTest}
+              >
+                <option value="">Select Investigation</option>
+
+                {investigationTests.map((test) => (
+                  <option key={test.id} value={test.id}>
+                    {test.name} (Rs.{test.price})
+                  </option>
+                ))}
+              </select>
+
+              {/* Selected tests list */}
+              <div className="nb-selected-tests">
+                {selectedTests.map((test) => (
+                  <span key={test.id} className="nb-test-item">
+                    {test.name} · Rs. {getNumericValue(test.price)}
+                    <button
+                      type="button"
+                      aria-label={`Remove ${test.name}`}
+                      title={`Remove ${test.name}`}
+                      onClick={() => handleRemoveTest(test.id)}
+                    >
+                      <X size={13} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* ACTIONS */}
+            <div className="nb-invest-actions">
+              <button type="button" className="nb-link" onClick={add}>
+                <Plus size={12} />
+                Add New
+              </button>
+
               <button
                 type="button"
-                aria-label={`Remove ${test.name}`}
-                onClick={() => remove(test.id)}
+                className="nb-link"
+                onClick={openRateList}
+                title="View investigation rate list"
               >
-                ×
+                <List size={12} />
+                Ratelist
               </button>
-            </span>
-          ))}
-        </div>
+            </div>
 
-        <button type="button" className="nb-link" onClick={add}>
-          <Plus size={12} /> Add New
-        </button>
+            {/* TOTAL / DUE */}
+            <small>
+              Total: Rs. {sum}, Due: Rs. {due}
+            </small>
 
-        <button type="button" className="nb-link">
-          <List size={12} /> Ratelist
-        </button>
-
-        <small>Total: Rs. {sum}, Due: Rs. 0</small>
-
-        {mode === "lab" && (
-          <div>
-            <button type="button" className="nb-pill">
-              ◉ Sample collected at
-            </button>
+            {/* SAMPLE COLLECTION */}
+            {modality === "lab" && (
+              <div>
+                <button type="button" className="nb-pill">
+                  <Plus size={12} />
+                  Sample collected at
+                </button>
+              </div>
+            )}
           </div>
-        )}
-      </div>
 
-      <Field label="* Paid" value="0" set={() => {}} />
-      <Field label="* Discount" value="0" set={() => {}} />
+          {/* PAID */}
+          <div className="nb-invest-payment-field">
+            <label htmlFor={`paid-${modality}`}>* Paid</label>
+            <input
+              id={`paid-${modality}`}
+              type="number"
+              min="0"
+              value={payment?.paid ?? ""}
+              onChange={(event) =>
+                onPaymentChange("paid", event.target.value)
+              }
+            />
+          </div>
+
+          {/* DISCOUNT */}
+          <div className="nb-invest-payment-field">
+            <label htmlFor={`discount-${modality}`}>* Discount</label>
+            <input
+              id={`discount-${modality}`}
+              type="number"
+              min="0"
+              value={payment?.discount ?? "0"}
+              onChange={(event) =>
+                onPaymentChange("discount", event.target.value)
+              }
+            />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -1057,17 +1572,17 @@ function Modal({ title, close, children, wide = "" }) {
   return (
     <div
       className="nb-backdrop"
-      onMouseDown={(event) =>
-        event.target === event.currentTarget && close()
-      }
+      onMouseDown={(event) => event.target === event.currentTarget && close()}
     >
       <div className={`nb-modal ${wide}`}>
         <div className="nb-modal-head">
           <b>{title}</b>
+
           <button type="button" onClick={close} aria-label="Close modal">
             <X size={15} />
           </button>
         </div>
+
         {children}
       </div>
     </div>
@@ -1087,7 +1602,10 @@ function RefModal({ close, save }) {
   });
 
   const update = (key, value) =>
-    setForm((current) => ({ ...current, [key]: value }));
+    setForm((current) => ({
+      ...current,
+      [key]: value,
+    }));
 
   return (
     <Modal title="Add new referrer" close={close}>
@@ -1099,33 +1617,40 @@ function RefModal({ close, save }) {
           set={(value) => update("title", value)}
           options={["Dr.", "Mr.", "Mrs.", "Ms."]}
         />
+
         <Field
           label="* First name"
           value={form.first}
           set={(value) => update("first", value)}
         />
+
         <Field
           label="Last name"
           value={form.last}
           set={(value) => update("last", value)}
         />
+
         <Field
           label="Degree"
           value={form.degree}
           set={(value) => update("degree", value)}
         />
+
         <Field
           label="Mobile number"
           value={form.mobile}
           set={(value) => update("mobile", value)}
         />
+
         <Field
           label="Contact email"
           value={form.email}
           set={(value) => update("email", value)}
         />
+
         <div>
           <label>Address</label>
+
           <textarea
             value={form.address}
             onChange={(event) => update("address", event.target.value)}
@@ -1145,12 +1670,12 @@ function RefModal({ close, save }) {
       <button
         type="button"
         className="nb-primary"
+        disabled={!form.first.trim()}
         onClick={() =>
-          form.first.trim() &&
           save({
             title: form.title,
-            firstName: form.first,
-            lastName: form.last,
+            firstName: form.first.trim(),
+            lastName: form.last.trim(),
             degree: form.degree,
             mobile: form.mobile,
             email: form.email,
@@ -1169,21 +1694,18 @@ function AgentModal({ close, save }) {
   const [name, setName] = useState("");
 
   return (
-    <Modal
-      title="Add new sample collection agent"
-      close={close}
-      wide="agent"
-    >
+    <Modal title="Add new sample collection agent" close={close} wide="agent">
       <label>* Name</label>
-      <input
-        value={name}
-        onChange={(event) => setName(event.target.value)}
-      />
+
+      <input value={name} onChange={(event) => setName(event.target.value)} />
+
       <br />
+
       <button
         type="button"
         className="nb-primary nb-save"
-        onClick={() => name.trim() && save(name.trim())}
+        disabled={!name.trim()}
+        onClick={() => save(name.trim())}
       >
         Save
       </button>
@@ -1198,26 +1720,19 @@ function TestModal({ title, close, save }) {
   return (
     <Modal title={title} close={close}>
       <div className="nb-test-grid">
-        <Field
-          label="Investigation / Test*"
-          value={name}
-          set={setName}
-        />
-        <Field
-          label="Rate (Rs.)*"
-          value={price}
-          set={setPrice}
-        />
+        <Field label="Investigation / Test*" value={name} set={setName} />
+
+        <Field label="Rate (Rs.)*" value={price} set={setPrice} />
       </div>
 
       <button
         type="button"
         className="nb-primary"
+        disabled={!name.trim() || price === ""}
         onClick={() =>
-          name.trim() &&
           save({
             name: name.trim(),
-            price: Number(price || 0),
+            price: getNumericValue(price),
           })
         }
       >
