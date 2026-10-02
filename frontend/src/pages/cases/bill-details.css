@@ -924,6 +924,7 @@
 
 @media print {
   @page {
+    size: A4 portrait;
     margin: 8mm;
   }
 
@@ -953,7 +954,9 @@
   .bill-action-panel,
   .bill-center-column,
   .bill-side-content,
-  .bill-patient-sidebar {
+  .bill-patient-sidebar,
+  .app-header,
+  .sidebar {
     display: none !important;
   }
 
@@ -972,9 +975,69 @@
 
   .bill-receipt {
     width: 100%;
-    max-width: 750px;
+    max-width: none;
+    min-height: 281mm;
     margin: 0 auto;
+    padding: 10mm;
     border: none;
     box-shadow: none;
+    display: flex;
+    flex-direction: column;
+    font-size: 11pt;
+    line-height: 1.45;
+  }
+
+  .bill-receipt-header {
+    margin-bottom: 24mm;
+  }
+
+  .bill-receipt-header h2 {
+    font-size: 20pt;
+  }
+
+  .bill-barcode {
+    margin-top: -18mm;
+  }
+
+  .bill-barcode-lines {
+    width: 65px;
+    height: 24px;
+  }
+
+  .bill-barcode small {
+    font-size: 9pt;
+  }
+
+  .bill-number {
+    padding: 10px 0;
+  }
+
+  .bill-number strong {
+    font-size: 18pt;
+  }
+
+  .bill-patient-summary {
+    padding: 16px 0 14px;
+  }
+
+  .bill-patient-summary p {
+    margin: 4px 0;
+  }
+
+  .bill-case-heading {
+    margin: 12mm 0 8px;
+    font-weight: 600;
+  }
+
+  .bill-table-heading,
+  .bill-test-row,
+  .bill-total-row {
+    padding: 9px 5px;
+  }
+
+  .bill-thank-you {
+    margin-top: auto;
+    padding-top: 18mm;
+    font-size: 12pt;
   }
 }
