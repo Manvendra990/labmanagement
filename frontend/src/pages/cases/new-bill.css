@@ -439,3 +439,556 @@
   margin: 10px 0;
   font-size: 12px;
 }
+
+
+
+/* Dynamically added optional patient fields */
+.nb-optional-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 14px;
+  max-width: 760px;
+}
+
+.nb-optional-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.nb-optional-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.nb-optional-heading label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.nb-optional-badge {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: #f1f3f5;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.nb-remove-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 0;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.nb-remove-field:hover {
+  color: #dc2626;
+}
+
+.nb-optional-field input,
+.nb-optional-field textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 5px;
+  background: #fff;
+  color: #1e293b;
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+}
+
+.nb-optional-field input:focus,
+.nb-optional-field textarea:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+.nb-optional-field textarea {
+  resize: vertical;
+  min-height: 75px;
+}
+
+.nb-pills button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  cursor: pointer;
+}
+
+
+/* All investigation modality buttons */
+.nb-modality-grid {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 12px;
+  margin: 18px 0 24px;
+}
+
+.nb-modality-grid .nb-modality-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 68px;
+  min-height: 86px;
+  padding: 10px 12px;
+  border: 1px solid #2463eb;
+  border-radius: 3px;
+  background: #fff;
+  color: #1554b8;
+  cursor: pointer;
+  font: inherit;
+  font-size: 14px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.nb-modality-grid .nb-modality-button:hover {
+  background: #eff6ff;
+}
+
+.nb-modality-grid .nb-modality-button.on {
+  background: #eff6ff;
+  border-color: #155eef;
+  box-shadow: inset 0 0 0 1px #155eef;
+}
+
+.nb-modality-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 29px;
+  height: 29px;
+  border-radius: 3px;
+  background: #1767c8;
+  color: #fff;
+}
+
+.nb-modality-button > span:last-child {
+  text-align: center;
+}
+
+/* Investigation section layout */
+.nb-invest {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+  margin: 18px 0 26px;
+}
+
+.nb-invest-content {
+  min-width: 0;
+}
+
+.nb-invest-content > label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.nb-remove-modality {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 25px;
+  height: 25px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #dc2626;
+  cursor: pointer;
+}
+
+.nb-remove-modality:hover {
+  background: #fee2e2;
+  border-radius: 4px;
+}
+
+.nb-tests {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.nb-test-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid #d5deea;
+  border-radius: 4px;
+  background: #f8fafc;
+}
+
+.nb-test-item button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border: 0;
+  background: transparent;
+  color: #dc2626;
+  cursor: pointer;
+}
+
+.nb-invest-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.nb-invest-content > small {
+  display: block;
+  margin-top: 8px;
+  color: #475569;
+}
+
+@media (max-width: 700px) {
+  .nb-modality-grid {
+    gap: 8px;
+  }
+
+  .nb-modality-grid .nb-modality-button {
+    flex: 1 1 100px;
+    min-width: 0;
+  }
+
+  .nb-invest {
+    grid-template-columns: 24px minmax(0, 1fr);
+  }
+}
+
+/* Lab investigations + Paid + Discount layout */
+.nb-invest-lab .nb-invest-content {
+  width: 100%;
+}
+
+.nb-invest-lab .nb-invest-top-grid {
+  display: grid;
+  grid-template-columns: minmax(350px, 1.8fr) minmax(170px, 0.75fr) minmax(170px, 0.75fr);
+  column-gap: 35px;
+  align-items: start;
+  max-width: 1085px;
+}
+
+.nb-invest-lab .nb-invest-test-column {
+  min-width: 0;
+}
+
+.nb-invest-lab .nb-invest-test-column > label,
+.nb-invest-lab .nb-invest-payment-field > label {
+  display: block;
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 500;
+  margin: 0 0 5px;
+  white-space: nowrap;
+}
+
+.nb-invest-lab .nb-invest-payment-field {
+  min-width: 0;
+}
+
+.nb-invest-lab .nb-invest-payment-field input {
+  display: block;
+  width: 100%;
+  height: 34px;
+  box-sizing: border-box;
+  padding: 0 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 5px;
+  font-size: 13px;
+  background: #fff;
+}
+
+.nb-invest-lab .nb-tests {
+  width: 100%;
+  min-height: 62px;
+  box-sizing: border-box;
+  margin: 0;
+  border: 1px solid #cbd5e1;
+  border-radius: 5px;
+  background: #fff;
+}
+
+.nb-invest-lab .nb-invest-actions {
+  margin-top: 4px;
+}
+
+.nb-invest-lab .nb-invest-content > small {
+  margin-top: 5px;
+  text-align: right;
+  font-size: 11px;
+}
+
+@media (max-width: 900px) {
+  .nb-invest-lab .nb-invest-top-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(110px, 0.45fr) minmax(110px, 0.45fr);
+    column-gap: 12px;
+  }
+}
+
+@media (max-width: 600px) {
+  .nb-invest-lab .nb-invest-top-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .nb-invest-lab .nb-invest-test-column {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Investigation title and tests on the left,
+   Paid and Discount on the right. */
+.nb-invest {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+  margin: 18px 0 26px;
+}
+
+.nb-invest-content {
+  min-width: 0;
+}
+
+.nb-invest-header {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) 210px 210px;
+  align-items: start;
+  gap: 35px;
+  width: 100%;
+}
+
+.nb-invest-heading {
+  min-width: 0;
+}
+
+.nb-invest-title {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.nb-invest-payment-field {
+  min-width: 0;
+}
+
+.nb-invest-payment-field label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.nb-invest-payment-field input {
+  width: 100%;
+  height: 45px;
+  box-sizing: border-box;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  padding: 0 12px;
+  background: #fff;
+  color: #17243a;
+  font: inherit;
+}
+
+.nb-invest-payment-field input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+.nb-invest-heading .nb-tests {
+  min-height: 78px;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 7px;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  background: #fff;
+}
+
+.nb-invest-heading > small {
+  display: block;
+  margin-top: 5px;
+  text-align: right;
+  color: #17243a;
+  font-size: 12px;
+}
+
+.nb-invest-heading .nb-invest-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 2px;
+}
+
+.nb-invest-heading .nb-pill {
+  margin-top: 30px;
+}
+
+@media (max-width: 1000px) {
+  .nb-invest-header {
+    grid-template-columns: minmax(0, 1fr) minmax(120px, 0.55fr) minmax(120px, 0.55fr);
+    gap: 12px;
+  }
+}
+
+@media (max-width: 700px) {
+  .nb-invest-header {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .nb-invest-heading {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Investigation layout: tests on the left, Paid and Discount on the right */
+.nb-invest-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 210px 210px;
+  align-items: start;
+  gap: 34px;
+}
+
+.nb-invest-main {
+  min-width: 0;
+}
+
+.nb-invest-title {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.nb-invest-payment-field {
+  min-width: 0;
+}
+
+.nb-invest-payment-field label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 13px;
+}
+
+.nb-invest-payment-field input {
+  width: 100%;
+  height: 45px;
+  box-sizing: border-box;
+  padding: 0 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.nb-invest-payment-field input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+}
+
+.nb-invest-main > small {
+  display: block;
+  margin-top: 8px;
+  text-align: right;
+}
+
+@media (max-width: 1000px) {
+  .nb-invest-header {
+    grid-template-columns: minmax(0, 1fr) minmax(120px, 0.5fr) minmax(120px, 0.5fr);
+    gap: 14px;
+  }
+}
+
+@media (max-width: 650px) {
+  .nb-invest-header {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .nb-invest-main {
+    grid-column: 1 / -1;
+  }
+}
+
+
+
+
+
+
+.nb-tests {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.nb-test-select {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #1f2937;
+  font-size: 14px;
+  cursor: pointer;
+  outline: none;
+}
+
+.nb-test-select:focus {
+  border-color: #3b82f6;
+}
+
+.nb-selected-tests {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.nb-test-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 9px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 5px;
+  font-size: 13px;
+  color: #1f2937;
+}
+
+.nb-test-item button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+}
+
+.nb-test-item button:hover {
+  color: #ef4444;
+}
